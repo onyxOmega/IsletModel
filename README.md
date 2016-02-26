@@ -1,1 +1,1 @@
-# IsletModel
+# BetaCellModel
