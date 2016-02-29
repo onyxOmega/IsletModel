@@ -15,11 +15,6 @@
 typedef boost::numeric::ublas::vector<double> vector_type;
 using namespace std;
 
-void IsletFileHandler::initialize(char const* outputPath)
-{
-	
-}
-
 char const* IsletFileHandler::get_userVarsFile()
 {
 	return userVarsFile;

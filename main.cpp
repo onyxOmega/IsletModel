@@ -69,10 +69,9 @@ double gChR2[cellNumber];
 double RandomSeed[cellNumber];
 
 int* randPos=new int[cellNumber];						// I don't think this is fully implemented. -WLF
-
 double NN[cellNumber][15];								// nearest neighbor, lists the cell numbers for up to 15 adjacent cells for each cell
 
-//[ stiff_system_definition
+// stiff_system_definition
 typedef boost::numeric::ublas::vector<double> vector_type;
 typedef boost::numeric::ublas::matrix<double> matrix_type;
 int numCores=4;
@@ -81,7 +80,7 @@ int main( int argc , char* argv[] )
 {
     cout << "argv[1] is " << argv[1] << endl;
 	
-	// Validate command line inputs. Section needs expansion.
+	// Validate command line inputs. Currently in a test phase. -WLF
 	if (argc < 2) 
 	{
         std::cerr << "Usage: " << argv[0] << " <OUTPUT_PATH>" << std::endl;
@@ -89,7 +88,6 @@ int main( int argc , char* argv[] )
     }
 	
 	IsletFileHandler fileHandler;
-	fileHandler.initialize(argv[1]);
 	fileHandler.purgeOutputFiles();
 	
 	IsletSimulator simIslet;
@@ -104,7 +102,8 @@ int main( int argc , char* argv[] )
 		cell in the islet; cellFile lists coordinates for each cell (which 
 		don't seem to be used at all in this or BetaCell.h); RVFile
 		pulls the output from the RandomVariables program, which
-		includes randomly generated cellular attributes. - WLF
+		includes randomly generated cellular attributes. These will
+		be integrated into the file manager class soon. - WLF
 	*/
 	
 	ifstream varsFile (fileHandler.get_cellPropertiesFile());
@@ -167,13 +166,22 @@ int main( int argc , char* argv[] )
 	End. -WLF */
 		
 		
+		
 /********************************************************/		
 /********************************************************/		
 /********************************************************/
 /********************************************************/				
 		
-	// This is everything that used to be in the BetaCell.h file.
-	// I moved it to facilitate the transition to Object Oriented Code.
+	/* This is everything that used to be in the BetaCell.h file.
+		I moved it to facilitate the transition to Object Oriented Code. 
+		Some modifications have been made.
+		-WLF
+	*/
+	
+	
+	/* This gathers values for variables where user definitions are
+		implemented
+	*/
 	
 	double tMax = simIslet.get_runTime();
 	double tStep = simIslet.get_stepTime();
@@ -185,6 +193,8 @@ int main( int argc , char* argv[] )
 	cout << "Run Time is set to " << simIslet.get_runTime() << " ms." << endl;
 	cout << "Time stamp:" << endl;
 	
+	
+	// Begin time loop (continues for the remainder of the file)
 	for(double t=0; t < tMax; t = t + tStep)
 	{
 		
@@ -205,6 +215,8 @@ int main( int argc , char* argv[] )
 
 #pragma omp parallel num_threads(numCores)
 #pragma omp for
+
+		// Begin cell loop
 		for (int j=0;j<cellNumber;j++)
 		{
 					
@@ -215,7 +227,10 @@ int main( int argc , char* argv[] )
 			int zPos=floor(hPos);
 			int xyPos=randPos[j]%(10*10);
 			
-			// Set initial values for the cell
+			/* Set initial values for the cell. These will be implemented in
+				and modified in the beta cell custom class.
+			*/
+			
 			double Vm=x[0+j*30];
 			double Nai=x[1+j*30];
 			double Ki=x[2+j*30];
@@ -253,7 +268,8 @@ int main( int argc , char* argv[] )
 			
 			/* Counts the number of cells coupled to a given cell, or "nearest neighbors"
 			then calculates the cell's coupling current as the summation of transjunctional
-			currents between the given cell and each adjacent cell.  - WLF */
+			currents between the given cell and each adjacent cell.  - WLF 
+			*/
 			double Icoup=0;
 			int NNPos;
 			int NNCount=0;
@@ -290,14 +306,15 @@ int main( int argc , char* argv[] )
 				}
 			}
 	
-			double KRe=0.000126;
-			double Kfa=0.0000063;
-			double Stoichi=2.5;
-			double Rvol=2.5;
-			double kATPCa=0.187;
-			double kATP=0.000062;
-			double kADPf=0.0002;
-			double kADPb=0.00002;
+			// sets a bunch of constants. 
+			double KRe=0.000126;								// never used -WLF
+			double Kfa=0.0000063;								// used line 584
+			double Stoichi=2.5;									// used in line 369, dxdt[7] equation
+			double Rvol=2.5;										// same as above, these two seem to cancel each other out.
+			double kATPCa=0.187;								// 637, 638m dxdt[5] & dxdt[6]
+			double kATP=0.000062;								// Same as above
+			double kADPf=0.0002;								// 638 dxdt[6]
+			double kADPb=0.00002;								// same
 			double Naout=140;
 			double Kout=5.4;
 			double Caout=2.6;
@@ -459,7 +476,8 @@ int main( int argc , char* argv[] )
 			double residual = 0.0;
 			double kPrime = 1.0;
 
-			double pOatp=(residual*0.5)+((1-residual)*(0.08*(1+2*MgADP/kdd)+0.89*pow((MgADP/kdd),2))/pow((1+MgADP/kdd),2)/(1+0.45*MgADP/ktd+ATP/(kPrime*ktt))) ;
+			double pOatp=(residual*0.5)+((1-residual)*(0.08*(1+2*MgADP/kdd)+0.89*pow((MgADP/kdd),2))/
+								  pow((1+MgADP/kdd),2)/(1+0.45*MgADP/ktd+ATP/(kPrime*ktt))) ;
 
 			double IChR2=0;
 

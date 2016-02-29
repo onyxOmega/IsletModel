@@ -53,9 +53,7 @@ class IsletFileHandler
 		char const* cellPostitionFile = "input/XYZpos.txt";
 	
 	public:
-		void initialize(const char*);
 		void writeOutputs(vector_type, int);
-		
 		void purgeOutputFiles();
 		char const* get_userVarsFile();
 		char const* get_cellPropertiesFile();
