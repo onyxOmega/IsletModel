@@ -87,11 +87,11 @@ int main( int argc , char* argv[] )
         return 1;
     }
 	
-	IsletFileHandler fileHandler;
+	IsletFileHandlerClass fileHandler;
 	fileHandler.purgeOutputFiles();
 	
-	IsletSimulator simIslet;
-	simIslet.initialize(fileHandler.get_userVarsFile());
+	IsletSimulatorClass isletSimulator(fileHandler);
+	isletSimulator.simulationLoop();
 	
 	vector_type x(cellNumber*30);
 	vector_type dxdt(cellNumber*30);
@@ -183,14 +183,14 @@ int main( int argc , char* argv[] )
 		implemented
 	*/
 	
-	double tMax = simIslet.get_runTime();
-	double tStep = simIslet.get_stepTime();
-	double kdd = simIslet.get_kdd();
-	double ktt = simIslet.get_ktt();
-	double ktd = simIslet.get_ktd();
+	double tMax = isletSimulator.get_runTime();
+	double tStep = isletSimulator.get_stepTime();
+	double kdd = isletSimulator.get_kdd();
+	double ktt = isletSimulator.get_ktt();
+	double ktd = isletSimulator.get_ktd();
 	double Glucose = 11.0;
 	
-	cout << "Run Time is set to " << simIslet.get_runTime() << " ms." << endl;
+	cout << "Run Time is set to " << isletSimulator.get_runTime() << " ms." << endl;
 	cout << "Time stamp:" << endl;
 	
 	
@@ -434,7 +434,7 @@ int main( int argc , char* argv[] )
 
 			//Calcium gating function
 			double SingleiCaL=0.0676*CaCF ;
-			double Ualpha=0.0042*2 ;
+			double Ualpha=0.0042*2 ;													// put in BetaCell structure even though it's a constant
 			double Ubeta=0.1159*(-1.15*SingleiCaL*VpOpen+Cai)*2;
 
 			//Ultraslow gate
@@ -505,7 +505,7 @@ int main( int argc , char* argv[] )
 			*/
 
 			double IKATP2=gKATPar[j]*(1+Pns)*pOatp*(Vm-EK);
-			double IKATP0=IKATP2 ;
+			double IKATP0=IKATP2;
 			IKATPvec[j]=IKATP2;
 		
 			//INaK
@@ -711,7 +711,7 @@ int main( int argc , char* argv[] )
 	}
 	
 	#pragma omp barrier
-	//BetaSolver(x1,dxdt, simIslet, fileHandler);
+	//BetaSolver(x1,dxdt, isletSimulator, fileHandler);
 
 	return 0;
 }

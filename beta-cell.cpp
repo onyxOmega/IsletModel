@@ -3,14 +3,3 @@
 */
 
 #include "beta-cell.h"
- 
- // Class constructor (incomplete)
- BetaCell::BetaCell()
- {
-	 
- }
- 
-void BetaCell::initialize()
-{	
-	
-}

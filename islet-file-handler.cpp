@@ -15,27 +15,32 @@
 typedef boost::numeric::ublas::vector<double> vector_type;
 using namespace std;
 
-char const* IsletFileHandler::get_userVarsFile()
+char const* IsletFileHandlerClass::get_userVarsFile()
 {
 	return userVarsFile;
 }
 
-char const* IsletFileHandler::get_cellPropertiesFile()
+char const* IsletFileHandlerClass::get_cellPropertiesFile()
 {
 	return cellPropertiesFile;
 }
 
-char const* IsletFileHandler::get_nnFile()
+char const* IsletFileHandlerClass::get_cellPositionFile()
+{
+	return cellPositionFile;
+}
+
+char const* IsletFileHandlerClass::get_nnFile()
 {
 	return nnFile;
 }
 
-char const* IsletFileHandler::get_randomVarsFile()
+char const* IsletFileHandlerClass::get_randomVarsFile()
 {
 	return randomVarsFile;
 }
 
-void IsletFileHandler::writeOutputs(vector_type x, int cellNumber)
+void IsletFileHandlerClass::writeOutputs(vector_type x, int cellNumber)
 {
 	ofstream outfilePotential;
 	outfilePotential.open(potentialOutput,ios::app);
@@ -134,7 +139,7 @@ void IsletFileHandler::writeOutputs(vector_type x, int cellNumber)
 	outfileNoise.close();
 }
 			
-void IsletFileHandler::purgeOutputFiles()
+void IsletFileHandlerClass::purgeOutputFiles()
 {
 	if (remove(potentialOutput)) perror("Error 5");
 	if (remove(calciumOutput)) perror("Error 7");
@@ -151,3 +156,4 @@ void IsletFileHandler::purgeOutputFiles()
 	if (remove(capOutput)) perror("Error 18");
 	if (remove(noiseOutput)) perror("Error 19");
 }
+
