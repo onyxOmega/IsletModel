@@ -44,7 +44,6 @@ struct IsletStructure
 	double Kout;
 	double Caout;
 	double Cm;
-	double voli;
 	double volER;
 	double fi;
 	double fer;
@@ -120,8 +119,6 @@ struct IsletStructure
 	double residual;
 	double kPrime;
 	
-	double IChR2;	
-	
 	double taup;
 	
 	long double fusionMax;
@@ -164,7 +161,8 @@ struct BetaCellStructure
 	double dxdt[30];
 		
 	// Array of nearest neighbor cell numbers	
-	int nnArray[15];
+	vector<int> nnVector;				// list of nearest neighbor (coupled) cell index values
+	int nnCount;								// total number of coupled cells.
 	
 	// variables populated from the randomVarsFile, in order of population
 	double gKATPar;
@@ -228,6 +226,7 @@ class IsletSimulatorClass
 		// other variables
 		double Glucose;
 		int cellNumber;
+		double Icoup;
 		
 		// Beta Cell vector
 		IsletStructure islet;
@@ -251,6 +250,7 @@ class IsletSimulatorClass
 		void setInitialBetaCellVars();
 		void setUserDefinedVars();
 		void simulationLoop();
+		void setNearestNeighbors();
 		double get_ktt() const;
 		double get_kdd() const;
 		double get_ktd() const;
