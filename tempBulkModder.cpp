@@ -1,0 +1,12 @@
+RVFile >> tempBC.gKATPar;
+RVFile >> tempBC.gCoup;
+RVFile >> tempBC.gKtoar;
+RVFile >> tempBC.PCaERar;
+RVFile >> tempBC.gKCaBKar;
+RVFile >> tempBC.PNACAar;
+RVFile >> tempBC.Prelar;
+RVFile >> tempBC.Popar;
+RVFile >> tempBC.ATPar;
+RVFile >> tempBC.KRev;
+RVFile >> tempBC.RandomSeed;
+RVFile >> tempBC.gChR2;

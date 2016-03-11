@@ -1,0 +1,4 @@
+totalATP=ATPar[j];
+ADPb=totalATP-ATP-MgADP/0.55;
+voli=1.049*exp(0.456*NNCount)+738.7;
+Caer=yini4+(fer*voli/2/volER)*(Cm/F/voli*(Vm-yini0)-(Nai-yini1)-(Ki-yini2)-2/fi*(Cai-yini3));

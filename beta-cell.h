@@ -10,13 +10,9 @@
 #ifndef BETACELL_H
 #define BETACELL_H
 
-class BetaCell
+struct BetaCell
 {
-	private:
 	
-	public:
-		BetaCell();									//	Class constructor
-		void initialize();
 };
 
 #endif

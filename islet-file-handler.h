@@ -25,7 +25,7 @@
 
 typedef boost::numeric::ublas::vector<double> vector_type;
 
-class IsletFileHandler 
+class IsletFileHandlerClass
 {
 	private:
 		// Output filenames.
@@ -50,12 +50,10 @@ class IsletFileHandler
 		char const* cellPropertiesFile = "input/vars5exo.txt";
 		char const* nnFile = "input/NN10A.txt";
 		char const* randomVarsFile = "input/RandomVars.txt";
-		char const* cellPostitionFile = "input/XYZpos.txt";
+		char const* cellPositionFile = "input/XYZpos.txt";
 	
 	public:
-		void initialize(const char*);
 		void writeOutputs(vector_type, int);
-		
 		void purgeOutputFiles();
 		char const* get_userVarsFile();
 		char const* get_cellPropertiesFile();
