@@ -1,0 +1,100 @@
+void IsletFileHandlerClass::ObjectiveWriteOutputs(BetaCellStructure betaCells[], int cellNumber)
+{
+	ofstream outfilePotential;
+	outfilePotential.open(obj_potentialOutput,ios::app);
+	ofstream outfileCalcium;
+	outfileCalcium.open(obj_calciumOutput,ios::app);
+	ofstream outfileSodium;
+	outfileSodium.open(obj_sodiumOutput,ios::app);
+	ofstream outfilePotassium;
+	outfilePotassium.open(obj_potassiumOutput,ios::app);
+	ofstream outfileCaer;
+	outfileCaer.open(obj_caerOutput,ios::app);
+	ofstream outfileATP;
+	outfileATP.open(obj_atpOutput,ios::app);
+	ofstream outfileADP;
+	outfileADP.open(obj_adpOutput,ios::app);
+	//ofstream outfileO1;
+	//ofstream outfileO2;
+	//ofstream outfileC1;
+	//ofstream outfileC2;
+	//outfileO1.open(obj_O1Output,ios::app);
+	//outfileO2.open(obj_O2Output,ios::app);
+	//outfileC1.open(obj_C1Output,ios::app);
+	//outfileC2.open(obj_C2Output,ios::app);
+	ofstream outfileIRP;
+	outfileIRP.open(obj_IRPOutput,ios::app);
+	ofstream outfilePP;
+	outfilePP.open(obj_PPOutput,ios::app);
+	ofstream outfileDP;
+	outfileDP.open(obj_DPOutput,ios::app);
+	ofstream outfileFIP;
+	outfileFIP.open(obj_FIPOutput,ios::app);
+	ofstream outfileRIP;
+	outfileRIP.open(obj_RIPOutput,ios::app);
+	ofstream outfileCap;
+	outfileCap.open(obj_capOutput,ios::app);
+	ofstream outfileNoise;
+	outfileNoise.open(obj_noiseOutput,ios::app);
+	
+	for (int k = 0; k < cellNumber; k++)
+	{
+		BetaCellStructure& cell = betaCells[cellNumber];
+		
+		outfilePotential << x[k] << ' ';
+		outfileSodium << cell.x[1] << ' ';
+		outfilePotassium << cell.x[2] << ' ';
+		outfileCaer << cell.x[4] << ' ';
+		outfileCalcium << cell.x[3] << ' ';
+		outfileATP << cell.x[5] << ' ';
+		outfileADP << cell.x[6] << ' ';
+		//outfileO1 << cell.x[18] << ' ';
+		//outfileO2 << cell.x[19] << ' ';
+		//outfileC1 << cell.x[20] << ' ';
+		//outfileC2 << cell.x[21] << ' ';
+		outfileIRP << cell.x[22] << ' ';
+		outfilePP << cell.x[23] << ' ';
+		outfileDP << cell.x[24] << ' ';
+		outfileFIP << cell.x[26] << ' ';
+		outfileRIP << cell.x[27] << ' ';
+		outfileCap << cell.x[28] << ' ';
+		outfileNoise << cell.x[29] << ' ';
+	}
+	
+	outfilePotential << endl;
+	outfileCalcium << endl;
+	outfileSodium << endl;
+	outfilePotassium << endl;
+	outfileCaer << endl;
+	outfileATP << endl;
+	outfileADP << endl;
+	//outfileO1 << endl;
+	//outfileO2 << endl;
+	//outfileC1 << endl;
+	//outfileC2 << endl;
+	outfileIRP << endl;
+	outfilePP << endl;
+	outfileDP << endl;
+	outfileFIP << endl;
+	outfileRIP << endl;
+	outfileCap << endl;
+	outfileNoise << endl;
+	outfilePotential.close();
+	outfileATP.close();
+	outfileADP.close();
+	//outfileO1.close();
+	//outfileO2.close();
+	//outfileC1.close();
+	//outfileC2.close();
+	outfileCalcium.close();
+	outfileSodium.close();
+	outfilePotassium.close();
+	outfileCaer.close();
+	outfileIRP.close();
+	outfilePP.close();
+	outfileDP.close();
+	outfileFIP.close();
+	outfileRIP.close();
+	outfileCap.close();
+	outfileNoise.close();
+}

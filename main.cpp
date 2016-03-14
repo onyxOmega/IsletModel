@@ -12,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <time.h>
 #include <boost/random/detail/config.hpp>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -90,8 +91,12 @@ int main( int argc , char* argv[] )
 	IsletFileHandlerClass fileHandler;
 	fileHandler.purgeOutputFiles();
 	
+	int objectStartTime = time(NULL);
 	IsletSimulatorClass isletSimulator(fileHandler);
 	isletSimulator.simulationLoop();
+	int objectRunTime = time(NULL) - objectStartTime;
+	
+	int origStartTime = time(NULL);
 	
 	vector_type x(cellNumber*30);
 	vector_type dxdt(cellNumber*30);
@@ -195,9 +200,9 @@ int main( int argc , char* argv[] )
 	
 	
 	// Begin time loop (continues for the remainder of the file)
+		
 	for(double t=0; t < tMax; t = t + tStep)
 	{
-		
 		/* Disabled: Glucose incrementer
 		if (dt<tMax/4)
 		{
@@ -213,8 +218,8 @@ int main( int argc , char* argv[] )
 		}
 		End. -WLF*/
 
-#pragma omp parallel num_threads(numCores)
-#pragma omp for
+//#pragma omp parallel num_threads(numCores)
+//#pragma omp for
 
 		// Begin cell loop
 		for (int j=0;j<cellNumber;j++)
@@ -663,8 +668,8 @@ int main( int argc , char* argv[] )
 			dxdt[29+j*30]=(-Pns)/taup-(Pns/taup)+noisey;
 		}
 
-#pragma omp parallel num_threads(numCores)
-#pragma omp for
+//#pragma omp parallel num_threads(numCores)
+//#pragma omp for
 		// Diff EQ linear approximation.
 		for(int j=0;j<cellNumber;j++)
 		{
@@ -709,8 +714,11 @@ int main( int argc , char* argv[] )
 			fileHandler.writeOutputs(x, cellNumber);
 		}
 	}
+	int origRunTime = time(NULL) - origStartTime;
+	cout << "Original version's total run time " << origRunTime << " seconds." << endl;
+	cout << "New version's total run time " << objectRunTime << " seconds." << endl;
 	
-	#pragma omp barrier
+//	#pragma omp barrier
 	//BetaSolver(x1,dxdt, isletSimulator, fileHandler);
 
 	return 0;
