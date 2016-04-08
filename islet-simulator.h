@@ -49,7 +49,8 @@ class IsletSimulatorClass
 		const double yini2 = 125.248586232226;
 		const double yini3 = 7.56138347594955E-05;
 		const double yini4 = 0.0047417301517704;
-
+		
+		stringstream dataOutputStream[14];
 		
 	public:
 		IsletSimulatorClass(IsletFileHandlerClass);					// Class constructor

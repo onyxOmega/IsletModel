@@ -11,7 +11,9 @@
 
 #include "islet-data-structures.h"
 
+#include <fstream>
 #include <vector>
+#include <sstream>
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/odeint.hpp>
@@ -26,10 +28,13 @@
 #include <boost/math/distributions/skew_normal.hpp>
 
 typedef boost::numeric::ublas::vector<double> vector_type;
+using namespace std;
 
 class IsletFileHandlerClass
 {
 	private:
+		
+		
 		// Output filenames.
 		char const* timeOutput = "output/time.txt";				
 		char const* potentialOutput = "output/potential.txt";			// membrane potential	
@@ -73,8 +78,14 @@ class IsletFileHandlerClass
 	
 	public:
 		void writeOutputs(vector_type, int);
-		void ObjectiveWriteOutputs(vector<BetaCellStructure>, int);
 		void purgeOutputFiles();
+		
+		void ObjectiveOutputPurgeFiles();	
+		void ObjectiveOutputOpenFiles();
+		void ObjectiveOutputCloseFiles();
+		void ObjectiveOutputDataBlock(stringstream*);
+		void ObjectiveOutputEndline();
+		
 		char const* get_userVarsFile();
 		char const* get_cellPropertiesFile();
 		char const* get_cellPositionFile();

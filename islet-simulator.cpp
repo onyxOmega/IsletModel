@@ -12,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <omp.h>
+#include <math.h>
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
@@ -299,7 +300,7 @@ void IsletSimulatorClass::setUserDefinedVars()
 void IsletSimulatorClass::simulationLoop()
 {
 	double tOld2 = 0;
-	for(double t = 0; t < runTime; t = t + stepTime)
+	for(double t = 0; t <= (runTime + stepTime/2); t = t + stepTime)
 	{	// Loop the simulation through each time step
 
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
@@ -312,7 +313,7 @@ void IsletSimulatorClass::simulationLoop()
 			
 
 		}
-
+			
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{	// Loop through each beta cell and perform calculations
 			BetaCellStructure& cell =  betaCells[cellIndex];
@@ -571,10 +572,10 @@ void IsletSimulatorClass::simulationLoop()
 			cell.dxdt[15] = E2_tot*kf+I1*beta1+I2*beta2-E1_tota*(kb+alpha1+alpha2);
 			cell.dxdt[16] = E1_tota*alpha1-I1*beta1;
 			cell.dxdt[17] = E1_tota*alpha2-I2*beta2;
-				//cell.dxdt[18] = dO1;
-				//cell.dxdt[19] = dO2;
-				//cell.dxdt[20] = dC1;
-				//cell.dxdt[21] = dC2;
+			//cell.dxdt[18] = dO1;
+			//cell.dxdt[19] = dO2;
+			//cell.dxdt[20] = dC1;
+			//cell.dxdt[21] = dC2;
 			//exocytosis ODEs
 			cell.dxdt[22] = islet.r1 * PP - islet.r_1 * IRP - fusion_I * IRP;
 			cell.dxdt[23] = islet.r_1* IRP - (islet.r1+islet.r_2)*PP +islet.r2*DP;
@@ -588,6 +589,7 @@ void IsletSimulatorClass::simulationLoop()
 
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{	// Loop back through to use dxdt for linear approximation.
+			// skips 18 - 21 becasuse the variables haven't been implemented.
 			for(int i = 0; i < 18; i++)
 			{
 				betaCells[cellIndex].x[i] = betaCells[cellIndex].x[i] + betaCells[cellIndex].dxdt[i] * stepTime;				
@@ -599,19 +601,47 @@ void IsletSimulatorClass::simulationLoop()
 			}
 		}
 		
-		//fileHandler.ObjectiveWriteOutputsOutputs(betaCells, cellNumber);
-		
-		if ((t - tOld2 ) > 100)
+		if (fmod((t+stepTime/2),100) < stepTime)			// using fmod gets as close to 100ms time stamp outputs as possible.  Can use improvement.
 		{
 			cout << "Objective Version Time: " << t << endl;
 			tOld2=t;
+			
+			for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
+			{
+				dataOutputStream[0] << betaCells[cellIndex].x[0] << " ";
+				dataOutputStream[1] << betaCells[cellIndex].x[1] << " ";
+				dataOutputStream[2] << betaCells[cellIndex].x[2] << " ";
+				dataOutputStream[3] << betaCells[cellIndex].x[3] << " ";
+				dataOutputStream[4] << betaCells[cellIndex].x[4] << " ";
+				dataOutputStream[5] << betaCells[cellIndex].x[5] << " ";
+				dataOutputStream[6] << betaCells[cellIndex].x[6] << " ";
+				dataOutputStream[7] << betaCells[cellIndex].x[22] << " ";
+				dataOutputStream[8] << betaCells[cellIndex].x[23] << " ";
+				dataOutputStream[9] << betaCells[cellIndex].x[24] << " ";
+				dataOutputStream[10] << betaCells[cellIndex].x[26] << " ";
+				dataOutputStream[11] << betaCells[cellIndex].x[27] << " ";
+				dataOutputStream[12] << betaCells[cellIndex].x[28] << " ";
+				dataOutputStream[13] << betaCells[cellIndex].x[29] << " ";
+			}	
+			
+			for(int i = 0; i < 14; i++)
+			{
+				dataOutputStream[i] << endl;
+			}
+			if (fmod((t + stepTime/2),500)  < stepTime)	// sends one output chunk to the file handler and resets the stringstream to blank
+			{
+				fileHandler.ObjectiveOutputDataBlock(dataOutputStream);
+				for(int i = 0; i < 14; i++)
+				{
+					dataOutputStream[i].str("");
+				}
+			}
 		}
 	}
+	
+	// Sends a final block of data of everything originated since the last clear
+	fileHandler.ObjectiveOutputDataBlock(dataOutputStream);
 }
-
-
-
-
 
 // Getters
 double IsletSimulatorClass::get_ktt() const

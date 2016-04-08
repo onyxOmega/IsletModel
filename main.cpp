@@ -90,6 +90,7 @@ int main( int argc , char* argv[] )
 	
 	IsletFileHandlerClass fileHandler;
 	fileHandler.purgeOutputFiles();
+	fileHandler.ObjectiveOutputPurgeFiles();
 	
 	int objectStartTime = time(NULL);
 	IsletSimulatorClass isletSimulator(fileHandler);
