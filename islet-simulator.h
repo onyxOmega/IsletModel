@@ -5,7 +5,7 @@
 	changes over time using a euler first order linar approximation on
 	a series of interdependant ODEs.
 	
-	Authors: William Fischer, Matt Wescott
+	Authors: Matt Wescott, William Fischer
 */
 
 #ifndef ISLETSIMULATOR_H
@@ -26,9 +26,12 @@ class IsletSimulatorClass
 	private:
 		IsletFileHandlerClass fileHandler;
 		
-		// User defined variables
-		std::string userVarMatrix[2][10];
-		double runTime, stepTime;
+		string userVarMatrix[2][10];					// User defined variable matrix
+		
+		double runTime;											// simulation time in miliseconds
+		double stepTime;										// time step interval for linear approximations
+		int outInterval = 100;								// time interval between data outputs
+		int outBufferSize = 5;								// number of output rows stored in a buffer before sending it to a file
 		
 		// other variables
 		double Glucose;
@@ -39,6 +42,7 @@ class IsletSimulatorClass
 		IsletStructure islet;
 		vector<BetaCellStructure> betaCells;
 		
+		// Islet simulation constants
 		const double R = 8.3143;
 		const double Tem = 310.15;
 		const double F = 96.4867;
@@ -50,6 +54,7 @@ class IsletSimulatorClass
 		const double yini3 = 7.56138347594955E-05;
 		const double yini4 = 0.0047417301517704;
 		
+		// Buffers an output data string array
 		stringstream dataOutputStream[14];
 		
 	public:
@@ -59,11 +64,6 @@ class IsletSimulatorClass
 		void setUserDefinedVars();
 		void simulationLoop();
 		void setNearestNeighbors();
-		double get_ktt() const;
-		double get_kdd() const;
-		double get_ktd() const;
-		double get_runTime() const;
-		double get_stepTime() const;
 };
 
 #endif

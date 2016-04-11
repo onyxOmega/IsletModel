@@ -22,8 +22,9 @@ struct IsletStructure
 		step. -WLF
 	*/
 	
-	double ktt, kdd, ktd;
-	
+	double ktt;
+	double kdd;
+	double ktd;
 	double KRe;
 	double Kfa;
 	double Stoichi;
@@ -169,40 +170,6 @@ struct BetaCellStructure
 	double KRev;
 	double RandomSeed;
 	double gChR2;
-	
-	// Variables populated from the varsFile, in order of population.
-	/*
-	double Vm;																				// x[0]
-	double Nai;																				// x[1]
-	double Ki;																				// x[2]
-	double Cai;																				// x[3]
-	double Caer;																			// x[4]
-	double ATP;																			// x[5]
-	double MgADP;																		// x[6]
-	double Re;																				// x[7]
-	double q_KDr;																		// x[8]
-	double d_CaL;																		// x[9]
-	double U_CaL;																		// x[10]
-	double fus;																				// x[11]
-	double p_KDr;																		// x[12]
-	double m_Kto;																		// x[13]
-	double h_Kto;																			// x[14]
-	double E1_tota;																		// x[15]
-	double I1;																				// x[16]
-	double I2;																				// x[17]
-	double O1;																				// x[18]
-	double O2;																				// x[19]
-	double C1;																				// x[20]
-	double C2;																				// x[21]
-	double IRP;																			// x[22]
-	double PP;																				// x[23]
-	double DP;																				// x[24]
-	double RES;																			// x[25]
-	double FIP;																			// x[26]
-	double RIP;																			// x[27]
-	double Cap;																			// x[28]
-	double Pns;																			// x[29]
-	*/
 	
 	// Other
 	double IKATPvec;

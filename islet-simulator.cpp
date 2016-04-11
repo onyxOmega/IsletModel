@@ -17,8 +17,6 @@
 
 using namespace std;
 
-// Parallel processing core number
-
 IsletSimulatorClass::IsletSimulatorClass(IsletFileHandlerClass tempHandler)
 {	
 	/* The following is a general implementation for pulling in a series 
@@ -29,26 +27,29 @@ IsletSimulatorClass::IsletSimulatorClass(IsletFileHandlerClass tempHandler)
 	
 	fileHandler = tempHandler;
 		
-	ifstream userVarFile;
-	userVarFile.open(fileHandler.get_userVarsFile());
-	
-	for (int i = 0; !userVarFile.eof(); i++)
-	{	
-		/* The user defined variables are passed into a variable matrix
-			"userVarMatrix" from the input file as string types. They are 
-			error checked, converted into the appropriate data type, and 
-			assigned in "setUserDefinedVars()". -WLF
-		*/
-		char buffer[20];
-		stringstream varStream;
-		userVarFile.getline(buffer, 20);
-		varStream << buffer;
-		varStream.getline(buffer, 10, '=');
-		string strBuffer(buffer);
-		userVarMatrix[0][i] = strBuffer;	
-		varStream.getline(buffer, 10, ';');
-		strBuffer.assign(buffer);
-		userVarMatrix[1][i] = strBuffer;
+	if (fileHandler.get_userVarsFile()!= "")
+	{
+		ifstream userVarFile;
+		userVarFile.open(fileHandler.get_userVarsFile().c_str());
+		
+		for (int i = 0; !userVarFile.eof(); i++)
+		{	
+			/* The user defined variables are passed into a variable matrix
+				"userVarMatrix" from the input file as string types. They are 
+				error checked, converted into the appropriate data type, and 
+				assigned in "setUserDefinedVars()". -WLF
+			*/
+			char buffer[20];
+			stringstream varStream;
+			userVarFile.getline(buffer, 20);
+			varStream << buffer;
+			varStream.getline(buffer, 10, '=');
+			string strBuffer(buffer);
+			userVarMatrix[0][i] = strBuffer;	
+			varStream.getline(buffer, 10, ';');
+			strBuffer.assign(buffer);
+			userVarMatrix[1][i] = strBuffer;
+		}
 	}
 	
 	IsletSimulatorClass::setDefaultVars();
@@ -251,13 +252,15 @@ void IsletSimulatorClass::setInitialBetaCellVars()
 	}
 }
 
-
 void IsletSimulatorClass::setUserDefinedVars()
 {
 	/*	This function over-rides default variables with any user defined
 	in the input file. Easily expansible to any commonly manipulated
 	variables. -WLF
 	*/
+	
+	bool userVariableBool = false;
+	cout << "Variables with user-set values:" << endl;
 
 	for(int i = 0; userVarMatrix[0][i] !=   ""; i++)
 	{
@@ -265,59 +268,64 @@ void IsletSimulatorClass::setUserDefinedVars()
 			lexical_cast to convert string to double because stod, atof,
 			and strod aren't correctly implemented in cygwin. -WLF
 		*/
+		
 		if(userVarMatrix[0][i]   ==   "ktt")
 		{
 			islet.ktt = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "ktt value derived from user input: " << islet.ktt << endl;
+			cout << "  ktt: " << islet.ktt << endl;
+			userVariableBool = true;
 		}
 
 		if(userVarMatrix[0][i]   ==   "kdd")
 		{
 			islet.kdd = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "kdd value derived from user input: " << islet.kdd << endl;
+			cout << "  kdd: " << islet.kdd << endl;
+			userVariableBool = true;
 		}
 
 		if(userVarMatrix[0][i]   ==   "ktd")
 		{
 			islet.ktd = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "ktd value derived from user input: " << islet.ktd << endl;
+			cout << "  ktd: " << islet.ktd << endl;
+			userVariableBool = true;
 		}
 
 		if(userVarMatrix[0][i]   ==   "runTime")
 		{
 			runTime = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "runTime value derived from user input: " << runTime << endl;
+			cout << "  runTime: " << runTime << endl;
+			userVariableBool = true;
 		}
 
 		if(userVarMatrix[0][i]   ==   "stepTime")
 		{
 			stepTime = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "stepTime value derived from user input: " << stepTime << endl;
+			cout << "  stepTime: " << stepTime << endl;
+			userVariableBool = true;
 		}
+		
+	}
+	
+	if(userVariableBool == false)
+	{
+		cout << "  No user set variables..." << endl;
 	}
 }
 
 void IsletSimulatorClass::simulationLoop()
 {
-	double tOld2 = 0;
+	cout << "Beginning simulation." << endl << "Time: "<< endl;
 	for(double t = 0; t <= (runTime + stepTime/2); t = t + stepTime)
 	{	// Loop the simulation through each time step
-
-		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
-		{	
-			/* Populate variables with their values from the previous time step of the linear 
-				approximation. These variables  are used in intermediate calculations before
-				the next time step. -WLF
-			*/
-			BetaCellStructure& cell =  betaCells[cellIndex];
 			
-
-		}
-			
+		// #pragma omp parallel for num_threads(12)											// uncomment for janus build to use all threads
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{	// Loop through each beta cell and perform calculations
+	
+			// Set "cell" as a reference to the cell with the current index. 
 			BetaCellStructure& cell =  betaCells[cellIndex];
 
+			// Set variable name references to the cell's data array members
 			double& Vm = cell.x[0];
 			double& Nai = cell.x[1];
 			double& Ki = cell.x[2];
@@ -346,10 +354,10 @@ void IsletSimulatorClass::simulationLoop()
 			double& RES = cell.x[25];
 			double& FIP = cell.x[26];
 			double& RIP = cell.x[27];
-			//double& Cap = cell.x[28];
-			double& Pns = cell.x[29];
+			double& Pns = cell.x[29];					// no intermediate calculations were needed for the x[28] variable, 
+																		// so no reference was set
 
-			/* Intermediate calculations between previous time step and next
+			/* Perform intermediate calculations between previous time step and next
 				This takes the current data set, which is transferred into BetaCellStructure variables from
 				the cell.x[] array (seen above) and makes intermediate calculations which feed into the 
 				calculations for the next time step. -WLF
@@ -530,7 +538,7 @@ void IsletSimulatorClass::simulationLoop()
 				int nnID = cell.nnVector[nnIndex];
 				BetaCellStructure neighbor = betaCells[nnID];
 				Icoup=Icoup+((cell.gCoup+neighbor.gCoup)/2)*(Vm-neighbor.x[0]);			// x[0] is the nearest neighbor's stored Vm value.
-																																			// Vm can't be used because it points to the current cell's x[0]
+																																			// note: Vm can't be used because it points to the current cell's x[0] value
 			}
 			
 			double Itot = IbNSC0+IKDr0+IKto0+IKATP0+ITRPM0+ICaL0+INaK0+INaCa0+IPMCA0+IKslow0+ICRAN0+Icoup+IChR2;
@@ -546,14 +554,12 @@ void IsletSimulatorClass::simulationLoop()
 			double noisey = noiseRand / 80;
 			
 			// FUSION POOL EXOCYTOSIS
-			//Hill equation for fusion with plasma membrane
+			// Hill equation for fusion with plasma membrane
 			long double fusion_I = islet.fusionMax * (pow(Cai,islet.nFuse))/(pow(Cai,islet.nFuse) + pow(islet.K_I,islet.nFuse));
 
 			long double Lflux = 5.18E-15*ICaL3/(.00383E-3);
-			/* Calc dxdt steps for each differential equation at each time 
-				point.
-			*/
-				
+			
+			//Calc dxdt steps for each differential equation at each time point.				
 			cell.dxdt[0] = -Itot/islet.Cm;
 			cell.dxdt[1] = -INatot/(F*voli);
 			cell.dxdt[2] = -IKtot/(F*voli);
@@ -588,49 +594,58 @@ void IsletSimulatorClass::simulationLoop()
 		}
 
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
-		{	// Loop back through to use dxdt for linear approximation.
+		{	// Loop back through each cell to use dxdt for linear approximation.
 			// skips 18 - 21 becasuse the variables haven't been implemented.
+			
+			BetaCellStructure& cell =  betaCells[cellIndex];
+			
 			for(int i = 0; i < 18; i++)
 			{
-				betaCells[cellIndex].x[i] = betaCells[cellIndex].x[i] + betaCells[cellIndex].dxdt[i] * stepTime;				
+				cell.x[i] = cell.x[i] + cell.dxdt[i] * stepTime;				
 			}
 			
 			for(int i = 22; i < 30; i++)
 			{
-				betaCells[cellIndex].x[i] = betaCells[cellIndex].x[i] + betaCells[cellIndex].dxdt[i] * stepTime;				
+				cell.x[i] = cell.x[i] + cell.dxdt[i] * stepTime;				
 			}
 		}
 		
-		if (fmod((t+stepTime/2),100) < stepTime)			// using fmod gets as close to 100ms time stamp outputs as possible.  Can use improvement.
-		{
-			cout << "Objective Version Time: " << t << endl;
-			tOld2=t;
+		if (fmod((t+stepTime/2), outInterval) < stepTime)	// uses the closest time stamp to each 100ms interval
+		{	// At given intervals, write the current data set to an output buffer.
+			// Send buffer data to output files periodically.
+			
+			cout << "  " << t << " ms" << endl;							// output the current simulation time
 			
 			for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 			{
-				dataOutputStream[0] << betaCells[cellIndex].x[0] << " ";
-				dataOutputStream[1] << betaCells[cellIndex].x[1] << " ";
-				dataOutputStream[2] << betaCells[cellIndex].x[2] << " ";
-				dataOutputStream[3] << betaCells[cellIndex].x[3] << " ";
-				dataOutputStream[4] << betaCells[cellIndex].x[4] << " ";
-				dataOutputStream[5] << betaCells[cellIndex].x[5] << " ";
-				dataOutputStream[6] << betaCells[cellIndex].x[6] << " ";
-				dataOutputStream[7] << betaCells[cellIndex].x[22] << " ";
-				dataOutputStream[8] << betaCells[cellIndex].x[23] << " ";
-				dataOutputStream[9] << betaCells[cellIndex].x[24] << " ";
-				dataOutputStream[10] << betaCells[cellIndex].x[26] << " ";
-				dataOutputStream[11] << betaCells[cellIndex].x[27] << " ";
-				dataOutputStream[12] << betaCells[cellIndex].x[28] << " ";
-				dataOutputStream[13] << betaCells[cellIndex].x[29] << " ";
+				BetaCellStructure& cell =  betaCells[cellIndex];
+				
+				dataOutputStream[0] << cell.x[0] << " ";
+				dataOutputStream[1] << cell.x[1] << " ";
+				dataOutputStream[2] << cell.x[2] << " ";
+				dataOutputStream[3] << cell.x[3] << " ";
+				dataOutputStream[4] << cell.x[4] << " ";
+				dataOutputStream[5] << cell.x[5] << " ";
+				dataOutputStream[6] << cell.x[6] << " ";
+				dataOutputStream[7] << cell.x[22] << " ";
+				dataOutputStream[8] << cell.x[23] << " ";
+				dataOutputStream[9] << cell.x[24] << " ";
+				dataOutputStream[10] << cell.x[26] << " ";
+				dataOutputStream[11] << cell.x[27] << " ";
+				dataOutputStream[12] << cell.x[28] << " ";
+				dataOutputStream[13] << cell.x[29] << " ";
 			}	
 			
 			for(int i = 0; i < 14; i++)
 			{
 				dataOutputStream[i] << endl;
 			}
-			if (fmod((t + stepTime/2),500)  < stepTime)	// sends one output chunk to the file handler and resets the stringstream to blank
+			
+			if (fmod((t + stepTime/2), outInterval*outBufferSize)  < stepTime)		// sends one output chunk (500 ms of data) to the file handler and resets the stringstream to blank
 			{
 				fileHandler.ObjectiveOutputDataBlock(dataOutputStream);
+				
+				// reset the output buffer string stream after an output
 				for(int i = 0; i < 14; i++)
 				{
 					dataOutputStream[i].str("");
@@ -643,28 +658,3 @@ void IsletSimulatorClass::simulationLoop()
 	fileHandler.ObjectiveOutputDataBlock(dataOutputStream);
 }
 
-// Getters
-double IsletSimulatorClass::get_ktt() const
-{
-	return islet.ktt;
-}
-
-double IsletSimulatorClass::get_kdd() const
-{
-	return islet.kdd;
-}
-
-double IsletSimulatorClass::get_ktd() const
-{
-	return islet.ktd;
-}
-
-double IsletSimulatorClass::get_runTime() const
-{
-	return runTime;
-}
-
-double IsletSimulatorClass::get_stepTime() const
-{
-	return stepTime;
-}
