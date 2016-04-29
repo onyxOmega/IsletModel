@@ -24,10 +24,13 @@ using namespace std;
 class IsletSimulatorClass
 {
 	private:
+		int const NUM_CORES = 2;						// set to 2 for local runs, 12 for Janus to optimize parallel processing. (local system probably has 4 cores, but not enough memory to use all of them for this)
+	
 		IsletFileHandlerClass fileHandler;
 		
 		string userVarMatrix[2][10];					// User defined variable matrix
 		
+		double seed;												// randomization seed. Defaults to time stamp based seed without user input.
 		double runTime;											// simulation time in miliseconds
 		double stepTime;										// time step interval for linear approximations
 		int outInterval = 100;								// time interval between data outputs

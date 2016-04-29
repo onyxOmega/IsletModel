@@ -1,4 +1,4 @@
-runTime=10000;
-kdd=0.01;
-ktt=0.05;
-ktd=0.026;
+runTime=500000;
+kPrime=1.0;
+poPrime=1.0;
+stepTime=0.14;

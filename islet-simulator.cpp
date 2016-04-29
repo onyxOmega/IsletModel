@@ -13,7 +13,25 @@
 #include <sstream>
 #include <omp.h>
 #include <math.h>
+#include <random>
+#include <ctime>
 #include <boost/lexical_cast.hpp>
+#include "boost/random/random_device.hpp"
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/detail/config.hpp>
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/fusion/container/vector.hpp>
+#include <boost/fusion/include/vector.hpp>
+#include <boost/fusion/container/vector/vector_fwd.hpp>
+#include <boost/fusion/include/vector_fwd.hpp>
+#include <boost/math/distributions/skew_normal.hpp>
+#include <boost/numeric/odeint.hpp>
+#include <boost/multi_array.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
 
 using namespace std;
 
@@ -52,20 +70,20 @@ IsletSimulatorClass::IsletSimulatorClass(IsletFileHandlerClass tempHandler)
 		}
 	}
 	
-	IsletSimulatorClass::setDefaultVars();
+	IsletSimulatorClass::setDefaultVars();	
 	IsletSimulatorClass::setUserDefinedVars();
+	IsletSimulatorClass::setInitialBetaCellVars();
 }
 
 void IsletSimulatorClass::setDefaultVars()
 {	
 	// simulation vars:
+	seed = time(NULL);
 	cellNumber = 1000;
 	runTime = 500.0;
 	stepTime = 0.18;
 	Glucose = 11.0;
-	
-	IsletSimulatorClass::setInitialBetaCellVars();
-	
+		
 	// Islet variables:
 	islet.ktt = 0.05;
 	islet.kdd = 0.01;
@@ -160,6 +178,7 @@ void IsletSimulatorClass::setDefaultVars()
 	// IKATP: ATP gated potassium channel current:
 	islet.residual = 0.0;
 	islet.kPrime = 1.0;
+	islet.poPrime = 1.0;
 
 	// noise parameters
 	islet.taup = 500;
@@ -193,6 +212,10 @@ void IsletSimulatorClass::setDefaultVars()
 	//rate of release (ms)
 	islet.u3 = 0.00004;
 	islet.F_md = .01;
+	
+	// mean coupling conductance.
+	islet.gCoupMean = 0.12;
+	islet.gCoupMultiplier = 1.0;
 }
 
 void IsletSimulatorClass::setInitialBetaCellVars()
@@ -202,33 +225,51 @@ void IsletSimulatorClass::setInitialBetaCellVars()
 	ifstream RVFile(fileHandler.get_randomVarsFile());
 	ifstream NNFile(fileHandler.get_nnFile());
 	
-	if (cellVarsFile.is_open() && RVFile.is_open() && NNFile.is_open())
+	if (cellVarsFile.is_open() && NNFile.is_open())
 	{
+		// Varables that are used later to normalize the coupling conductance to the user defined mean (0.12 default)
+		double cSum = 0;
+		
+		// Create random distributions for randomizing variable parameters
+		boost::mt19937 gen(seed);
+		boost::random::uniform_real_distribution<> dis(0.25, 1.5);
+		boost::normal_distribution<> gKATPv(2.31, .23);
+		boost::gamma_distribution<> gCoupS(4,4);
+		boost::normal_distribution<> gKtoarv(2.13, 0.231);
+		boost::normal_distribution<> PCaERarv(0.096, 0.0090);
+		boost::normal_distribution<> gGKCaBKv(2.31,0.230);
+		boost::normal_distribution<> PNACAv(204,20);
+		boost::normal_distribution<> Prelv(0.46,0.0446);
+		boost::normal_distribution<> Popv(0.0005,0.00000);
+		boost::normal_distribution<> ATPv(4,0.4);
+		boost::normal_distribution<> KBOXv(0.0000063,0.0000006);
+		boost::normal_distribution<> GLYCv(0.000126,0.0000315);
+		
 		for (int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{
 			// create temporary beta cell variable.
 			BetaCellStructure cell;
 						
+			// get initial values for cellular variables from an input file		
 			for (int varFileIndex = 0; varFileIndex < 30; varFileIndex++)
-			{	// get initial values for cellular variables from an input file
+			{
 				cellVarsFile >> cell.x[varFileIndex];
 			}
 			
-			// populate beta cell constants from random variable file
-			RVFile >> cell.gKATPar;
-			RVFile >> cell.gCoup;
-			RVFile >> cell.gKtoar;
-			RVFile >> cell.PCaER;
-			RVFile >> cell.gKCaBKar;
-			RVFile >> cell.PNACAar;
-			RVFile >> cell.Prelar;
-			RVFile >> cell.Popar;
-			RVFile >> cell.ATPar;
-			RVFile >> cell.KRev;
-			RVFile >> cell.RandomSeed;
-			RVFile >> cell.gChR2;
+			cell.gKATPar=gKATPv(gen);
+			cell.gCoup=gCoupS(gen);
+			cell.gKtoar=gKtoarv(gen);
+			cell.PCaER=PCaERarv(gen);
+			cell.gKCaBKar=gGKCaBKv(gen);
+			cell.PNACAar=PNACAv(gen);
+			cell.Prelar=Prelv(gen);
+			cell.Popar=Popv(gen);
+			cell.ATPar=ATPv(gen);
+			cell.KRev=GLYCv(gen);
+			cell.RandomSeed=rand() % 1000000;
+			cell.gChR2=dis(gen);
 			
-			// populate nearest neighbor array from nn file.
+			cSum += cell.gCoup;
 		
 			for (int nnIndex = 0; nnIndex < 15; nnIndex++)
 			{
@@ -246,6 +287,50 @@ void IsletSimulatorClass::setInitialBetaCellVars()
 			cell.nnCount = cell.nnVector.size();	
 			betaCells.push_back(cell);
 		}
+		
+		
+		// Head an output table for sample randomized variables.
+		cout << "\nRandomized parameters for the first 10 cells are...\n";
+		cout << fixed << setfill(' ') << setw(10) << "gKATPar" ;
+		// gCoup creates a gaussian distribution which is later normalized
+		// to a default or user defined mean
+		cout << fixed << setfill(' ') << setw(10) << "gCoup";
+		cout << fixed << setfill(' ') << setw(10) << "gKtoar";
+		cout << fixed << setfill(' ') << setw(10) << "PCaER";
+		cout << fixed << setfill(' ') << setw(10) << "gKCaBKar";
+		cout << fixed << setfill(' ') << setw(12) << "PNACAar";
+		cout << fixed << setfill(' ') << setw(10) << "Prelar";
+		cout << fixed << setfill(' ') << setw(8) << "Popar";
+		cout << fixed << setfill(' ') << setw(10) << "ATPar";
+		cout << fixed << setfill(' ') << setw(12) << "KRev";
+		cout << fixed << setfill(' ') << setw(8) << "Rand";
+		cout << fixed << setfill(' ') << setw(10) << "gChR2" << endl;
+		
+		double cMean=cSum/cellNumber;
+		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
+		{
+			betaCells[cellIndex].gCoup = betaCells[cellIndex].gCoup*islet.gCoupMean*islet.gCoupMultiplier/cMean;
+			
+			if (cellIndex < 10)
+			{
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].gKATPar ;
+				// gCoup creates a gaussian distribution which is later normalized
+				// to a default or user defined mean
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].gCoup;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].gKtoar;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].PCaER;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].gKCaBKar;
+				cout << fixed << setfill(' ') << setw(12) << setprecision(6) << betaCells[cellIndex].PNACAar;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) <<  betaCells[cellIndex].Prelar;
+				cout << fixed << setfill(' ') << setw(8) << setprecision(4) << betaCells[cellIndex].Popar;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].ATPar;
+				cout << fixed << setfill(' ') << setw(12) << setprecision(8) << betaCells[cellIndex].KRev;
+				cout << fixed << setfill(' ') << setw(8) << setprecision(0) << betaCells[cellIndex].RandomSeed;
+				cout << fixed << setfill(' ') << setw(10) << setprecision(6) << betaCells[cellIndex].gChR2 << endl;
+				cout << setprecision(0);
+			}
+		}
+		
 		cellVarsFile.close();
 		RVFile.close();
 		NNFile.close();
@@ -262,48 +347,55 @@ void IsletSimulatorClass::setUserDefinedVars()
 	bool userVariableBool = false;
 	cout << "Variables with user-set values:" << endl;
 
-	for(int i = 0; userVarMatrix[0][i] !=   ""; i++)
+	for(int i = 0; userVarMatrix[0][i] !=  ""; i++)
 	{
 		/* If a given variable is on the list, set the value. Used boost
 			lexical_cast to convert string to double because stod, atof,
 			and strod aren't correctly implemented in cygwin. -WLF
 		*/
 		
-		if(userVarMatrix[0][i]   ==   "ktt")
+		if(userVarMatrix[0][i] ==  "kPrime")
 		{
-			islet.ktt = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "  ktt: " << islet.ktt << endl;
+			islet.kPrime = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  K1/2 prime value: " << islet.kPrime << endl;
 			userVariableBool = true;
 		}
-
-		if(userVarMatrix[0][i]   ==   "kdd")
+		if(userVarMatrix[0][i] == "poPrime")
 		{
-			islet.kdd = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "  kdd: " << islet.kdd << endl;
+			islet.poPrime = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  Percent open for Katp channels: " << islet.poPrime << endl;
 			userVariableBool = true;
-		}
-
-		if(userVarMatrix[0][i]   ==   "ktd")
-		{
-			islet.ktd = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "  ktd: " << islet.ktd << endl;
-			userVariableBool = true;
-		}
-
-		if(userVarMatrix[0][i]   ==   "runTime")
+		}		
+		if(userVarMatrix[0][i] == "runTime")
 		{
 			runTime = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "  runTime: " << runTime << endl;
+			cout << "  Simulation run time: " << runTime << endl;
 			userVariableBool = true;
 		}
-
-		if(userVarMatrix[0][i]   ==   "stepTime")
+		if(userVarMatrix[0][i] == "stepTime")
 		{
 			stepTime = boost::lexical_cast<double>(userVarMatrix[1][i]);
-			cout << "  stepTime: " << stepTime << endl;
+			cout << "  Step time for linear approximation: " << stepTime << endl;
 			userVariableBool = true;
 		}
-		
+		if(userVarMatrix[0][i] == "gCoupMean")
+		{
+			islet.gCoupMean = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  Average coupling conductance: " << islet.gCoupMean << endl;
+			userVariableBool = true;
+		}
+		if(userVarMatrix[0][i] == "gCoupMultiplier")
+		{
+			islet.gCoupMultiplier = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  Coupling conductance multiplier: " << islet.gCoupMultiplier << endl;
+			userVariableBool = true;
+		}
+		if(userVarMatrix[0][i] == "seed")
+		{
+			seed = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  Fixed randomization seed: " << seed << endl;
+			userVariableBool = true;
+		}
 	}
 	
 	if(userVariableBool == false)
@@ -312,13 +404,14 @@ void IsletSimulatorClass::setUserDefinedVars()
 	}
 }
 
+
 void IsletSimulatorClass::simulationLoop()
 {
 	cout << "Beginning simulation." << endl << "Time: "<< endl;
 	for(double t = 0; t <= (runTime + stepTime/2); t = t + stepTime)
 	{	// Loop the simulation through each time step
 			
-		// #pragma omp parallel for num_threads(12)											// uncomment for janus build to use all threads
+		#pragma omp parallel for num_threads(NUM_CORES)
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{	// Loop through each beta cell and perform calculations
 	
@@ -435,7 +528,7 @@ void IsletSimulatorClass::simulationLoop()
 			double ITRPM0 = ITRPM1+ITRPM2;
 			
 			// IKATP: ATP gated potassium channel current:
-			double PoATP = (islet.residual*0.5)+((1-islet.residual)*(0.08*(1+2*MgADP/islet.kdd)+0.89*pow((MgADP/islet.kdd),2))/
+			double PoATP = (islet.residual*0.5)+((1-islet.residual)*(islet.poPrime*0.08*(1+2*MgADP/islet.kdd)+0.89*pow((MgADP/islet.kdd),2))/
 										pow((1+MgADP/islet.kdd),2)/(1+0.45*MgADP/islet.ktd+ATP/(islet.kPrime*islet.ktt)));
 			
 			double IChR2 = 0;
@@ -593,6 +686,7 @@ void IsletSimulatorClass::simulationLoop()
 			cell.dxdt[29] = (-Pns)/islet.taup-(Pns/islet.taup)+noisey;
 		}
 
+		#pragma omp parallel for num_threads(NUM_CORES)
 		for(int cellIndex = 0; cellIndex < cellNumber; cellIndex++)
 		{	// Loop back through each cell to use dxdt for linear approximation.
 			// skips 18 - 21 becasuse the variables haven't been implemented.
