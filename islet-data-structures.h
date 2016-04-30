@@ -111,6 +111,7 @@ struct IsletStructure
 	// IKATP: ATP gated potassium channel current:
 	double residual;
 	double kPrime;
+	double poPrime;
 	
 	double taup;
 	
@@ -139,6 +140,9 @@ struct IsletStructure
 	//rate of release (ms)
 	long double u3;
 	long double F_md;	
+	
+	double gCoupMean;
+	double gCoupMultiplier;
 };
 
 struct BetaCellStructure
