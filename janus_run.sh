@@ -12,4 +12,4 @@ cd $PBS_O_WORKDIR
 
 #Execute
 
-./Beta.exe default >> runtimeOutput.txt
+./simulate.exe input/UserDefinedVars.txt >> runtimeOutput.txt

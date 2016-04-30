@@ -24,7 +24,7 @@ using namespace std;
 class IsletSimulatorClass
 {
 	private:
-		int const NUM_CORES = 2;						// set to 2 for local runs, 12 for Janus to optimize parallel processing. (local system probably has 4 cores, but not enough memory to use all of them for this)
+		int const NUM_CORES = 12;						// set to 2 for local runs, 12 for Janus to optimize parallel processing. (local system probably has 4 cores, but not enough memory to use all of them for this)
 	
 		IsletFileHandlerClass fileHandler;
 		
@@ -34,7 +34,7 @@ class IsletSimulatorClass
 		double runTime;											// simulation time in miliseconds
 		double stepTime;										// time step interval for linear approximations
 		int outInterval = 100;								// time interval between data outputs
-		int outBufferSize = 5;								// number of output rows stored in a buffer before sending it to a file
+		int outBufferSize = 20;								// number of output rows stored in a buffer before sending it to a file
 		
 		// other variables
 		double Glucose;

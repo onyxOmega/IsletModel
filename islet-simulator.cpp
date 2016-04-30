@@ -617,7 +617,7 @@ void IsletSimulatorClass::simulationLoop()
 			double PoKslow = 1/(1+pow((islet.KdKslow/Cai),islet.nKslow));
 			double IKslow2 = islet.PKslow*PoKslow*KCF;
 			double IKslow0 = IKslow2;	// Both of these are used in separate equations elsewhere. Keep it like this
-															// in case this formula needs to be expanded later (to avoid confusion)		
+													// in case this formula needs to be expanded later (to avoid confusion)		
 
 			double PoCRAN = 1/(1+exp((Caer-islet.KCaer)/0.003));
 			double ICRAN1 = islet.PCRAN*islet.RNa_K_CRAN*PoCRAN*NaCF;
@@ -631,7 +631,7 @@ void IsletSimulatorClass::simulationLoop()
 				int nnID = cell.nnVector[nnIndex];
 				BetaCellStructure neighbor = betaCells[nnID];
 				Icoup=Icoup+((cell.gCoup+neighbor.gCoup)/2)*(Vm-neighbor.x[0]);			// x[0] is the nearest neighbor's stored Vm value.
-																																			// note: Vm can't be used because it points to the current cell's x[0] value
+																																// note: Vm can't be used because it points to the current cell's x[0] value
 			}
 			
 			double Itot = IbNSC0+IKDr0+IKto0+IKATP0+ITRPM0+ICaL0+INaK0+INaCa0+IPMCA0+IKslow0+ICRAN0+Icoup+IChR2;
@@ -675,6 +675,7 @@ void IsletSimulatorClass::simulationLoop()
 			//cell.dxdt[19] = dO2;
 			//cell.dxdt[20] = dC1;
 			//cell.dxdt[21] = dC2;
+			
 			//exocytosis ODEs
 			cell.dxdt[22] = islet.r1 * PP - islet.r_1 * IRP - fusion_I * IRP;
 			cell.dxdt[23] = islet.r_1* IRP - (islet.r1+islet.r_2)*PP +islet.r2*DP;
