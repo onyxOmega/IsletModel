@@ -101,6 +101,7 @@ struct IsletStructure
 	double KCarp;
 	
 	//Glycolysis and oxidative phosph;
+	double GkMutation;
 	double KmATP;
 	double hgl;
 	double Kg;

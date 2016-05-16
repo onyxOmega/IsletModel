@@ -61,10 +61,10 @@ IsletSimulatorClass::IsletSimulatorClass(IsletFileHandlerClass tempHandler)
 			stringstream varStream;
 			userVarFile.getline(buffer, 20);
 			varStream << buffer;
-			varStream.getline(buffer, 10, '=');
+			varStream.getline(buffer, 20, '=');
 			string strBuffer(buffer);
 			userVarMatrix[0][i] = strBuffer;	
-			varStream.getline(buffer, 10, ';');
+			varStream.getline(buffer, 20, ';');
 			strBuffer.assign(buffer);
 			userVarMatrix[1][i] = strBuffer;
 		}
@@ -168,6 +168,7 @@ void IsletSimulatorClass::setDefaultVars()
 	islet.KCarp = 0.0005;
 
 	//Glycolysis and oxidative phosph;
+	islet.GkMutation = 1.0;
 	islet.KmATP = 0.5;
 	islet.hgl = 2.5;
 	islet.Kg = 13;
@@ -394,6 +395,12 @@ void IsletSimulatorClass::setUserDefinedVars()
 		{
 			seed = boost::lexical_cast<double>(userVarMatrix[1][i]);
 			cout << "  Fixed randomization seed: " << seed << endl;
+			userVariableBool = true;
+		}
+		if(userVarMatrix[0][i] == "GkMutation")
+		{
+			islet.GkMutation = boost::lexical_cast<double>(userVarMatrix[1][i]);
+			cout << "  Glucokinase mutation glycolysis rate modifier: " << islet.GkMutation << endl;
 			userVariableBool = true;
 		}
 	}
@@ -639,7 +646,7 @@ void IsletSimulatorClass::simulationLoop()
 			double IKtot = IbNSC2+IKDr2+IKto2+IKATP2+ITRPM2+ICaL2+INaK2+IKslow2+ICRAN2+Icoup/3;
 			double ICatot = ICaL3+INaCa3+IPMCA3+ICRAN3+Icoup/3+IChR2/2;
 			
-			double JGlyc = cell.KRev*fGlu*(islet.Nt-Re);
+			double JGlyc = islet.GkMutation*cell.KRev*fGlu*(islet.Nt-Re);
 			double JBox = islet.Kfa*(islet.Nt-Re);
 
 			// noise parameters

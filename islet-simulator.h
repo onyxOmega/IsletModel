@@ -24,7 +24,7 @@ using namespace std;
 class IsletSimulatorClass
 {
 	private:
-		int const NUM_CORES = 2;						// set to 2 for local runs, 12 for Janus to optimize parallel processing. (local system probably has 4 cores, but not enough memory to use all of them for this)
+		int const NUM_CORES = 12;						// set to 2 for local runs, 12 for Janus to optimize parallel processing. (local system probably has 4 cores, but not enough memory to use all of them for this)
 	
 		IsletFileHandlerClass fileHandler;
 		
